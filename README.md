@@ -11,7 +11,7 @@ Main notebook which:
 ## 🚀 Getting Started
 
 ```bash
-git clone https://github.com/your-org/pitchProbabi.git
+git clone https://github.com/AlvaroCapde/pitchProbability.git
 cd pitchProbability
 
 pip install --upgrade pip
