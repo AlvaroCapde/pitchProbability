@@ -10,7 +10,6 @@ Main notebook which:
 
 ## 🚀 Getting Started
 
-### 1. Clone this repo
 ```bash
 git clone https://github.com/your-org/pitchProbabi.git
 cd pitchProbability
