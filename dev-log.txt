@@ -1,0 +1,78 @@
+Pitch Type Prediction – Dev Notes
+
+Goal: predict pitch types from in-game data. Started simple with Random Forest, ended up with CatBoost and reached 44% accuracy.
+
+1. Loading the Data
+
+Gathered daily CSV files like 20250501‑Panamericano‑1.csv. Each had pitch-by-pitch data (balls, strikes, outs, inning, pitcher hand, speed, angles, etc.) and the target: AutoPitchType.
+
+First hurdle: merging all the CSVs. Used glob("*.csv") + pd.concat. Quick win. But then came NaNs — both in features and the label — which broke training.
+
+2. First Model – Random Forest
+
+Set up a basic scikit-learn pipeline: imputer → one-hot encoder → RandomForestClassifier.
+
+Problems:
+- train_test_split(stratify=y) failed due to missing labels → dropped those rows.
+- OneHotEncoder param changed in sklearn 1.2 → updated sparse=False to sparse_output=False.
+
+It trained. Accuracy landed around 29%. Nothing special, but a working baseline.
+
+3. Some Tuning
+
+Ran RandomizedSearchCV (30 param combos, 3-fold CV).  
+Best config: 1200 trees, depth 5, using √n features.
+
+CV hit 34.7%, but test still around 29%. Slight bump, but not enough.
+
+4. KNN – Didn’t Help
+
+Tried KNN using both Euclidean and Hamming distance on the encoded data. Accuracy stayed between 26–28%.
+
+Conclusion: KNN doesn’t play well with sparse one-hot data. Dropped it.
+
+5. Category Encoding Strategy
+
+Checked unique counts (.nunique()) for each categorical feature.
+
+- Low-card (balls, strikes, outs, pitcher throws) → One-hot
+- High-card (inning) → Ordinal
+
+This helped tree models split better and reduced matrix size.
+
+6. Extra Features
+
+Added some engineered features:
+
+- ball_strike_sum = pitch count pressure  
+- full_count = 3-2 situation flag  
+- two_outs = game state awareness  
+- late_inning = ≥7th inning flag
+
+Combined these with release metrics to give both context and physics to the model.
+
+7. Switched to CatBoost
+
+Moved to CatBoostClassifier to handle categoricals natively.
+
+Issue: it threw errors because categorical columns were float.  
+Fix: filled NaNs with "MISSING", then cast to str.
+
+Model jumped to 44% accuracy right away on the same data. Big improvement over Random Forest.
+
+8. Quick Visuals
+
+Built a few simple plots:
+
+- Pitch type counts (bar chart)  
+- Release speed vs. vertical angle (scatter)  
+- Histogram of release speed
+
+They backed up CatBoost’s top features: speed and game context mattered most.
+
+9. Wrapping It Up
+
+- Wrote a short project report (ready for Google Docs / Word)  
+- README with setup + run steps  
+- Data summary table using pandas  
+- This dev log
